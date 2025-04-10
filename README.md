@@ -20,6 +20,10 @@ StudyBuddy is a modern, responsive web app designed for students to **collaborat
 
 ---
 
+![screenshot](https://github.com/user-attachments/assets/fa481344-d298-45c3-98b8-6cbe1272225d)
+
+---
+
 ## 🚀 Getting Started
 
 ### 1. Clone the repository
