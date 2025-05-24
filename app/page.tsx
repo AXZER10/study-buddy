@@ -309,15 +309,16 @@ const StudyBuddy: React.FC = () => {
   const handleFlashcardAdd = (): void => {
     if (newCardQuestion.trim() === '' || newCardAnswer.trim() === '' || !selectedGroup) return;
 
+    const groupCards = selectedGroup?.name && flashcards[selectedGroup.name] ? flashcards[selectedGroup.name] : [];
     const card: Flashcard = {
-      id: (flashcards[selectedGroup?.name] || []).length + 1,
+      id: groupCards.length + 1,
       question: newCardQuestion,
       answer: newCardAnswer
     };
 
     setFlashcards({
       ...flashcards,
-      [selectedGroup?.name]: [...(flashcards[selectedGroup?.name] || []), card]
+      [selectedGroup?.name]: [...groupCards, card]
     });
 
     setNewCardQuestion('');
@@ -339,7 +340,9 @@ const StudyBuddy: React.FC = () => {
   const handleEditSave = (): void => {
     if (!selectedGroup || !editingCard || editCardQuestion.trim() === '' || editCardAnswer.trim() === '') return;
 
-    const updatedFlashcards = flashcards[selectedGroup?.name].map(card =>
+    const groupCards = selectedGroup?.name && flashcards[selectedGroup.name] ? flashcards[selectedGroup.name] : [];
+    if (!groupCards) return;
+    const updatedFlashcards = groupCards.map(card =>
       card.id === editingCard.id
         ? { ...card, question: editCardQuestion, answer: editCardAnswer }
         : card
@@ -356,10 +359,11 @@ const StudyBuddy: React.FC = () => {
   };
 
   const handleQuizStart = (): void => {
-    if (!selectedGroup || !flashcards[selectedGroup?.name] || flashcards[selectedGroup?.name].length === 0) return;
+    const groupCards = selectedGroup?.name && flashcards[selectedGroup.name] ? flashcards[selectedGroup.name] : [];
+    if (!selectedGroup || groupCards.length === 0) return;
 
-    const randomIndex = Math.floor(Math.random() * flashcards[selectedGroup?.name].length);
-    setCurrentCard(flashcards[selectedGroup?.name][randomIndex]);
+    const randomIndex = Math.floor(Math.random() * groupCards.length);
+    setCurrentCard(groupCards[randomIndex]);
     setShowCardAnswer(false);
   };
 
@@ -395,10 +399,11 @@ const StudyBuddy: React.FC = () => {
   };
 
   const handleNextCard = (): void => {
-    if (!selectedGroup || !flashcards[selectedGroup?.name] || flashcards[selectedGroup?.name].length === 0) return;
+    const groupCards = selectedGroup?.name && flashcards[selectedGroup.name] ? flashcards[selectedGroup.name] : [];
+    if (!selectedGroup || groupCards.length === 0) return;
 
-    const randomIndex = Math.floor(Math.random() * flashcards[selectedGroup?.name].length);
-    setCurrentCard(flashcards[selectedGroup?.name][randomIndex]);
+    const randomIndex = Math.floor(Math.random() * groupCards.length);
+    setCurrentCard(groupCards[randomIndex]);
     setShowCardAnswer(false);
   };
 
@@ -995,115 +1000,122 @@ const StudyBuddy: React.FC = () => {
                 <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
                   Test your knowledge with the flashcards you and your group members have created.
                 </p>
-                <button
-                  onClick={handleQuizStart}
-                  disabled={!flashcards[selectedGroup?.name] || flashcards[selectedGroup?.name].length === 0}
-                  className={`w-full px-6 py-4 rounded-xl flex items-center justify-center font-medium text-lg ${!flashcards[selectedGroup?.name] || flashcards[selectedGroup?.name].length === 0
+              <button
+                onClick={handleQuizStart}
+                disabled={
+                  !((selectedGroup?.name && flashcards[selectedGroup.name]?.length))
+                }
+                className={`w-full px-6 py-4 rounded-xl flex items-center justify-center font-medium text-lg ${
+                  !((selectedGroup?.name && flashcards[selectedGroup.name]?.length))
                     ? darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-amber-500 hover:bg-amber-600 text-white transition-all duration-300 shadow-md transform hover:translate-y-[-2px] hover:shadow-lg cursor-pointer'
-                    }`}
-                >
-                  <Award size={22} className="mr-2" />
-                  Start Quiz Mode
-                </button>
-                {(() => {
-                  const groupName = selectedGroup?.name;
-                  return groupName && (!flashcards[groupName] || flashcards[groupName].length === 0);
-                })() && (
-                    <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-500'} mt-2 text-center`}>
-                      Create flashcards first to start studying
-                    </p>
-                  )}
+                  }`}
+              >
+                <Award size={22} className="mr-2" />
+                Start Quiz Mode
+              </button>
+              {(() => {
+                const groupName = selectedGroup?.name;
+                const groupCards = groupName && flashcards[groupName] ? flashcards[groupName] : [];
+                return groupName && groupCards.length === 0;
+              })() && (
+                  <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-500'} mt-2 text-center`}>
+                    Create flashcards first to start studying
+                  </p>
+                )}
               </div>
             </div>
 
             <div>
               <h3 className={`text-lg font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-800'} mb-4`}>Your Flashcards</h3>
-              {flashcards[selectedGroup?.name] && flashcards[selectedGroup?.name].length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {editingCard ? (
-                    <div className={`${darkMode ? 'bg-gray-800 border-amber-700' : 'bg-white border-amber-300'} p-5 rounded-xl shadow-lg border-2 col-span-1 sm:col-span-2 lg:col-span-3 animate-fade-in`}>
-                      <h4 className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'} mb-4 flex items-center`}>
-                        <span className="text-lg">Editing Card</span>
-                      </h4>
-                      <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <div>
-                          <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Question</label>
-                          <input
-                            type="text"
-                            value={editCardQuestion}
-                            onChange={(e) => setEditCardQuestion(e.target.value)}
-                            className={`flex-1 p-2 sm:p-3 text-sm sm:text-base ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-200 border-gray-300 text-gray-800'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors duration-300`}
-                          />
-                        </div>
-                        <div>
-                          <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Answer</label>
-                          <input
-                            type="text"
-                            value={editCardAnswer}
-                            onChange={(e) => setEditCardAnswer(e.target.value)}
-                            className={`flex-1 p-2 sm:p-3 text-sm sm:text-base ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-200 border-gray-300 text-gray-800'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors duration-300`}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          onClick={handleEditCancel}
-                          className={`cursor-pointer px-4 py-2 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition-all duration-300 flex items-center`}
-                        >
-                          <X size={16} className="mr-1" />
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleEditSave}
-                          className="cursor-pointer px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all duration-300 flex items-center"
-                        >
-                          <Save size={16} className="mr-1" />
-                          Save Changes
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                    {(selectedGroup?.name ? flashcards[selectedGroup.name] : []).map((card, index) => (
-                    <div
-                      key={card.id}
-                      className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-amber-600' : 'bg-white border-amber-100 hover:border-amber-300'} p-5 rounded-xl shadow-md border-2 transition-all duration-300 hover:shadow-lg transform hover:translate-y-[-2px] relative animate-fade-in`}
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <div className={`mb-3 pb-3 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                        <h4 className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'} mb-2 flex items-center`}>
-                          <span className={`w-6 h-6 rounded-full ${darkMode ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-600'} flex items-center justify-center mr-2 text-xs font-bold`}>Q</span>
-                          Question:
+              {(() => {
+                const groupCards = selectedGroup?.name && flashcards[selectedGroup.name] ? flashcards[selectedGroup.name] : [];
+                return groupCards.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {editingCard ? (
+                      <div className={`${darkMode ? 'bg-gray-800 border-amber-700' : 'bg-white border-amber-300'} p-5 rounded-xl shadow-lg border-2 col-span-1 sm:col-span-2 lg:col-span-3 animate-fade-in`}>
+                        <h4 className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'} mb-4 flex items-center`}>
+                          <span className="text-lg">Editing Card</span>
                         </h4>
-                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-800'} pl-8`}>
-                          {card.question}
-                        </p>
+                        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                          <div>
+                            <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Question</label>
+                            <input
+                              type="text"
+                              value={editCardQuestion}
+                              onChange={(e) => setEditCardQuestion(e.target.value)}
+                              className={`flex-1 p-2 sm:p-3 text-sm sm:text-base ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-200 border-gray-300 text-gray-800'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors duration-300`}
+                            />
+                          </div>
+                          <div>
+                            <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Answer</label>
+                            <input
+                              type="text"
+                              value={editCardAnswer}
+                              onChange={(e) => setEditCardAnswer(e.target.value)}
+                              className={`flex-1 p-2 sm:p-3 text-sm sm:text-base ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-200 border-gray-300 text-gray-800'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors duration-300`}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end space-x-3">
+                          <button
+                            onClick={handleEditCancel}
+                            className={`cursor-pointer px-4 py-2 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition-all duration-300 flex items-center`}
+                          >
+                            <X size={16} className="mr-1" />
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleEditSave}
+                            className="cursor-pointer px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all duration-300 flex items-center"
+                          >
+                            <Save size={16} className="mr-1" />
+                            Save Changes
+                          </button>
+                        </div>
                       </div>
+                    ) : null}
 
-                      <div>
-                        <h4 className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'} mb-2 flex items-center`}>
-                          <span className={`w-6 h-6 rounded-full ${darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-600'} flex items-center justify-center mr-2 text-xs font-bold`}>A</span>
-                          Answer:
-                        </h4>
-                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-800'} pl-8`}>
-                          {card.answer}
-                        </p>
-                      </div>
-
-                      <button
-                        className={`absolute top-2 right-2 opacity-75 hover:opacity-100 transition-opacity duration-300 p-1 rounded-md ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-amber-50'}`}
-                        onClick={() => handleEditStart(card)}
-                        aria-label="Edit flashcard"
+                    {groupCards.map((card, index) => (
+                      <div
+                        key={card.id}
+                        className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-amber-600' : 'bg-white border-amber-100 hover:border-amber-300'} p-5 rounded-xl shadow-md border-2 transition-all duration-300 hover:shadow-lg transform hover:translate-y-[-2px] relative animate-fade-in`}
+                        style={{ animationDelay: `${index * 100}ms` }}
                       >
-                        <Edit size={16} className={`${darkMode ? 'text-amber-400' : 'text-amber-500'}`} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className={`${darkMode ? 'text-gray-500' : 'text-gray-500'} italic`}>No flashcards created yet</p>
-              )}
+                        <div className={`mb-3 pb-3 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                          <h4 className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'} mb-2 flex items-center`}>
+                            <span className={`w-6 h-6 rounded-full ${darkMode ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-600'} flex items-center justify-center mr-2 text-xs font-bold`}>Q</span>
+                            Question:
+                          </h4>
+                          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-800'} pl-8`}>
+                            {card.question}
+                          </p>
+                        </div>
+
+                        <div>
+                          <h4 className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'} mb-2 flex items-center`}>
+                            <span className={`w-6 h-6 rounded-full ${darkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-600'} flex items-center justify-center mr-2 text-xs font-bold`}>A</span>
+                            Answer:
+                          </h4>
+                          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-800'} pl-8`}>
+                            {card.answer}
+                          </p>
+                        </div>
+
+                        <button
+                          className={`absolute top-2 right-2 opacity-75 hover:opacity-100 transition-opacity duration-300 p-1 rounded-md ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-amber-50'}`}
+                          onClick={() => handleEditStart(card)}
+                          aria-label="Edit flashcard"
+                        >
+                          <Edit size={16} className={`${darkMode ? 'text-amber-400' : 'text-amber-500'}`} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className={`${darkMode ? 'text-gray-500' : 'text-gray-500'} italic`}>No flashcards created yet</p>
+                );
+              })()}
             </div>
           </>
         )}
@@ -1279,28 +1291,30 @@ const StudyBuddy: React.FC = () => {
             <div className="flex justify-between items-start mb-3">
               <h3 className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm font-medium`}>Flashcards Mastered</h3>
               <span className={`${darkMode ? 'bg-teal-900/30 text-emerald-400' : 'bg-teal-100 text-emerald-800'} text-xs font-medium px-3 py-1 rounded-full transition-colors duration-300`}>
-                {progressData[selectedGroup?.name]?.completedCards || 0}/{progressData[selectedGroup?.name]?.totalCards || 0}
+                {(selectedGroup?.name && progressData[selectedGroup.name]?.completedCards) || 0}/{(selectedGroup?.name && progressData[selectedGroup.name]?.totalCards) || 0}
               </span>
             </div>
 
             <div className="flex items-center">
               <div className={`text-3xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-900'} mr-3`}>
-                {progressData[selectedGroup?.name] ?
-                  Math.round((progressData[selectedGroup?.name].completedCards / progressData[selectedGroup?.name].totalCards) * 100) : 0}%
+                {(selectedGroup?.name && progressData[selectedGroup.name])
+                  ? Math.round((progressData[selectedGroup.name].completedCards / progressData[selectedGroup.name].totalCards) * 100)
+                  : 0}% 
               </div>
               <div className={`flex-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-4 overflow-hidden shadow-inner relative`}>
                 <div
                   className="bg-teal-500 h-4 rounded-full transition-all duration-1000 ease-out flex items-center justify-end pr-2"
                   style={{
-                    width: `${progressData[selectedGroup?.name] ?
-                      (progressData[selectedGroup?.name].completedCards / progressData[selectedGroup?.name].totalCards) * 100 : 0}%`
+                    width: `${(selectedGroup?.name && progressData[selectedGroup.name])
+                      ? (progressData[selectedGroup.name].completedCards / progressData[selectedGroup.name].totalCards) * 100
+                      : 0}%`
                   }}
                 >
-                  {progressData[selectedGroup?.name] &&
-                    progressData[selectedGroup?.name].completedCards > 0 &&
-                    (progressData[selectedGroup?.name].completedCards / progressData[selectedGroup?.name].totalCards) * 100 > 20 && (
+                  {(selectedGroup?.name && progressData[selectedGroup.name]) &&
+                    progressData[selectedGroup.name].completedCards > 0 &&
+                    (progressData[selectedGroup.name].completedCards / progressData[selectedGroup.name].totalCards) * 100 > 20 && (
                       <span className="text-xs text-white font-bold">
-                        {Math.round((progressData[selectedGroup?.name].completedCards / progressData[selectedGroup?.name].totalCards) * 100)}%
+                        {Math.round((progressData[selectedGroup.name].completedCards / progressData[selectedGroup.name].totalCards) * 100)}%
                       </span>
                     )}
                 </div>
@@ -1322,7 +1336,7 @@ const StudyBuddy: React.FC = () => {
             </div>
             <div className="flex items-end">
               <div className={`text-2xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-900'} mr-2`}>
-                {Math.floor((progressData[selectedGroup?.name]?.studyTime || 0) / 60)}h {(progressData[selectedGroup?.name]?.studyTime || 0) % 60}m
+                {Math.floor(((selectedGroup?.name && progressData[selectedGroup.name]?.studyTime) || 0) / 60)}h {((selectedGroup?.name && progressData[selectedGroup.name]?.studyTime) || 0) % 60}m
               </div>
               <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Total
@@ -1339,8 +1353,9 @@ const StudyBuddy: React.FC = () => {
             </div>
             <div className="flex items-center">
               <div className={`text-2xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-900'} mr-2`}>
-                {progressData[selectedGroup?.name]?.quizScores ?
-                  Math.round(progressData[selectedGroup?.name].quizScores.reduce((a, b) => a + b, 0) / progressData[selectedGroup?.name].quizScores.length) : 0}%
+                {(selectedGroup?.name && progressData[selectedGroup.name]?.quizScores)
+                  ? Math.round(progressData[selectedGroup.name].quizScores.reduce((a, b) => a + b, 0) / progressData[selectedGroup.name].quizScores.length)
+                  : 0}%
               </div>
               <div className="flex space-x-1">
                 {[1, 2, 3, 4, 5].map((star) => (
